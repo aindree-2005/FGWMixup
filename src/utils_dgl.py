@@ -162,7 +162,13 @@ def split_class_x_graphs(dataset):
     all_graphs_list = []
     all_node_x_list = []
     for idx in range(len(dataset)):
-        adj = dataset[idx][0].adj().to_dense().numpy()
+        graph = dataset[idx][0]
+        num_nodes = graph.num_nodes()
+        src, dst = graph.edges()
+        adj = torch.zeros((num_nodes, num_nodes), dtype=torch.float32)
+        adj[src, dst] = 1
+        adj[dst, src] = 1
+        adj = adj.numpy()
         all_graphs_list.append(adj)
         all_node_x_list.append(dataset[idx][0].ndata['node_attr'].numpy())
     # print(len(all_node_x_list), all_node_x_list[0])
@@ -189,7 +195,7 @@ def universal_svd(aligned_graphs: List[np.ndarray], threshold: float = 2.02) -> 
     :param threshold: the threshold for singular values
     :return: graphon: the estimated (r, r) graphon model
     """
-    aligned_graphs = graph_numpy2tensor(aligned_graphs).to( "cuda" )
+    aligned_graphs = graph_numpy2tensor(aligned_graphs)
     num_graphs = aligned_graphs.size(0)
 
     if num_graphs > 1:
@@ -207,7 +213,6 @@ def universal_svd(aligned_graphs: List[np.ndarray], threshold: float = 2.02) -> 
     graphon[graphon > 1] = 1
     graphon[graphon < 0] = 0
     graphon = graphon.cpu().numpy()
-    torch.cuda.empty_cache()
     return graphon
 
 

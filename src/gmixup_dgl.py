@@ -43,7 +43,7 @@ def prepare_dataset_x(dataset):
         # all_attr = []
         for idx in range(len(dataset)):
             # all_attr.append(dataset[idx][0].ndata['node_attr'])
-            dataset[idx][0].ndata['node_attr'] = torch.cat((F.one_hot(dataset[idx][0].ndata['node_labels'].squeeze(), num_classes=3), \
+            dataset[idx][0].ndata['node_attr'] = torch.cat((F.one_hot(dataset[idx][0].ndata['node_labels'].squeeze().long(), num_classes=3), \
                 dataset[idx][0].ndata['node_attr']), dim=-1).type(torch.FloatTensor)
         # all_attr = torch.cat(all_attr, dim=0)
         # mean_attr = torch.mean(all_attr, dim=0)
@@ -53,19 +53,19 @@ def prepare_dataset_x(dataset):
             
     elif dataset.name == 'PROTEINS':
         for idx in range(len(dataset)):
-            dataset[idx][0].ndata['node_attr'] = F.one_hot(dataset[idx][0].ndata['node_labels'].squeeze(), num_classes=3).squeeze().type(torch.FloatTensor)
+            dataset[idx][0].ndata['node_attr'] = F.one_hot(dataset[idx][0].ndata['node_labels'].squeeze().long(), num_classes=3).squeeze().type(torch.FloatTensor)
     elif dataset.name == 'NCI1':
         for idx in range(len(dataset)):
-            dataset[idx][0].ndata['node_attr'] = F.one_hot(dataset[idx][0].ndata['node_labels'].squeeze(), num_classes=37).squeeze().type(torch.FloatTensor)
+            dataset[idx][0].ndata['node_attr'] = F.one_hot(dataset[idx][0].ndata['node_labels'].squeeze().long(), num_classes=37).squeeze().type(torch.FloatTensor)
     elif dataset.name == 'NCI109':
         for idx in range(len(dataset)):
-            dataset[idx][0].ndata['node_attr'] = F.one_hot(dataset[idx][0].ndata['node_labels'].squeeze(), num_classes=38).squeeze().type(torch.FloatTensor)
+            dataset[idx][0].ndata['node_attr'] = F.one_hot(dataset[idx][0].ndata['node_labels'].squeeze().long(), num_classes=38).squeeze().type(torch.FloatTensor)
     elif dataset.name == 'DD':
         for idx in range(len(dataset)):
-            dataset[idx][0].ndata['node_attr'] = F.one_hot(dataset[idx][0].ndata['node_labels'].squeeze(), num_classes=89).squeeze().type(torch.FloatTensor)
+            dataset[idx][0].ndata['node_attr'] = F.one_hot(dataset[idx][0].ndata['node_labels'].squeeze().long(), num_classes=89).squeeze().type(torch.FloatTensor)
     elif dataset.name == 'MUTAG':
         for idx in range(len(dataset)):
-            dataset[idx][0].ndata['node_attr'] = F.one_hot(dataset[idx][0].ndata['node_labels'].squeeze(), num_classes=7).squeeze().type(torch.FloatTensor)
+            dataset[idx][0].ndata['node_attr'] = F.one_hot(dataset[idx][0].ndata['node_labels'].squeeze().long(), num_classes=7).squeeze().type(torch.FloatTensor)
 
     else:
         if 'node_attr' not in dataset[0][0].ndata.keys():
@@ -96,6 +96,7 @@ def prepare_dataset_onehot_y(dataset):
     num_classes = dataset.num_classes
     if not isinstance(num_classes, int):
         num_classes = num_classes.item()
+    dataset.graph_labels = dataset.graph_labels.long()
     dataset.graph_labels = F.one_hot(dataset.graph_labels, num_classes=num_classes).type(torch.FloatTensor).squeeze()
     return dataset
 
@@ -284,13 +285,7 @@ if __name__ == '__main__':
     np.random.seed(seed) #numpy
     random.seed(seed)
     torch.manual_seed(seed) # cpu
-    torch.cuda.manual_seed(seed) #gpu
-    torch.backends.cudnn.deterministic=True # cudnn
-
-    if args.gpu:
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    else:
-        device = torch.device('cpu')
+    device = torch.device('cpu')
     logger.info(f"runing device: {device}")
 
     path = osp.join(data_path, dataset_name)
