@@ -96,6 +96,7 @@ def prepare_dataset_onehot_y(dataset):
     num_classes = dataset.num_classes
     if not isinstance(num_classes, int):
         num_classes = num_classes.item()
+    dataset.graph_labels = dataset.graph_labels.long()
     dataset.graph_labels = F.one_hot(dataset.graph_labels, num_classes=num_classes).type(torch.FloatTensor).squeeze()
     return dataset
 
@@ -284,13 +285,7 @@ if __name__ == '__main__':
     np.random.seed(seed) #numpy
     random.seed(seed)
     torch.manual_seed(seed) # cpu
-    torch.cuda.manual_seed(seed) #gpu
-    torch.backends.cudnn.deterministic=True # cudnn
-
-    if args.gpu:
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    else:
-        device = torch.device('cpu')
+    device = torch.device('cpu')
     logger.info(f"runing device: {device}")
 
     path = osp.join(data_path, dataset_name)
