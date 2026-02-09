@@ -7,6 +7,7 @@ from ot.utils import check_random_state, unif
 from ot.backend import get_backend
 
 from ot.gromov import *
+from ot.gromov import update_feature_matrix, update_structure_matrix
 import time
 
 def fused_ACC_numpy(M, A, B, a=None, b=None, X=None, alpha=0, epoch=2000, eps=1e-5, rho=1e-1):
@@ -206,8 +207,10 @@ def my_fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fix
         # print(f'Solve FGW time @ iter {cpt}: {time.time() - time_start}')
 
         # T is N,ns
-        err_feature = nx.norm(X - nx.reshape(Xprev, (N, d))) / nx.norm(nx.reshape(Xprev, (N, d)))
-        err_structure = nx.norm(C - Cprev) / nx.norm(Cprev)
+        prev_feature_norm = nx.norm(nx.reshape(Xprev, (N, d)))
+        prev_structure_norm = nx.norm(Cprev)
+        err_feature = nx.norm(X - nx.reshape(Xprev, (N, d))) / (prev_feature_norm + 1e-12)
+        err_structure = nx.norm(C - Cprev) / (prev_structure_norm + 1e-12)
         # print(err_feature, err_structure)
         if log:
             log_['err_feature'].append(err_feature)
