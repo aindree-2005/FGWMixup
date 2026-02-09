@@ -96,6 +96,7 @@ def prepare_dataset_onehot_y(dataset):
     num_classes = dataset.num_classes
     if not isinstance(num_classes, int):
         num_classes = num_classes.item()
+    dataset.graph_labels = dataset.graph_labels.long()
     dataset.graph_labels = F.one_hot(dataset.graph_labels, num_classes=num_classes).type(torch.FloatTensor).squeeze()
     return dataset
 
