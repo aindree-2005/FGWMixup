@@ -51,7 +51,8 @@ Suggested Enviornments:
 The commands below create a virtual environment, activate it, and install CPU-only dependencies from `requirements.txt`.
 
 ```bash
-python3.9 -m venv .venv
+
+
 source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
