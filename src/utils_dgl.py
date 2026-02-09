@@ -162,7 +162,13 @@ def split_class_x_graphs(dataset):
     all_graphs_list = []
     all_node_x_list = []
     for idx in range(len(dataset)):
-        adj = dataset[idx][0].adj().to_dense().numpy()
+        graph = dataset[idx][0]
+        num_nodes = graph.num_nodes()
+        src, dst = graph.edges()
+        adj = torch.zeros((num_nodes, num_nodes), dtype=torch.float32)
+        adj[src, dst] = 1
+        adj[dst, src] = 1
+        adj = adj.numpy()
         all_graphs_list.append(adj)
         all_node_x_list.append(dataset[idx][0].ndata['node_attr'].numpy())
     # print(len(all_node_x_list), all_node_x_list[0])
