@@ -47,3 +47,14 @@ Suggested Enviornments:
 - DGL 1.0.2
 - POT 0.8.2
 
+### CPU setup (venv + requirements)
+The commands below create a virtual environment, activate it, and install CPU-only dependencies from `requirements.txt`.
+
+```bash
+python3.9 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+> Note: `requirements.txt` uses CPU wheels for PyTorch/DGL and PyG (no CUDA).
