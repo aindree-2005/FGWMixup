@@ -189,7 +189,7 @@ def universal_svd(aligned_graphs: List[np.ndarray], threshold: float = 2.02) -> 
     :param threshold: the threshold for singular values
     :return: graphon: the estimated (r, r) graphon model
     """
-    aligned_graphs = graph_numpy2tensor(aligned_graphs).to( "cuda" )
+    aligned_graphs = graph_numpy2tensor(aligned_graphs)
     num_graphs = aligned_graphs.size(0)
 
     if num_graphs > 1:
@@ -207,7 +207,6 @@ def universal_svd(aligned_graphs: List[np.ndarray], threshold: float = 2.02) -> 
     graphon[graphon > 1] = 1
     graphon[graphon < 0] = 0
     graphon = graphon.cpu().numpy()
-    torch.cuda.empty_cache()
     return graphon
 
 
