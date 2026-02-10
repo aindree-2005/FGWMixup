@@ -432,7 +432,7 @@ class GraphormerLayer(nn.Module):
 
 
 class Graphormer(torch.nn.Module):
-    def __init__(self, num_features=1, num_classes=2, num_hidden=64, num_heads=4, max_dist=20, max_degree=20, num_layers=5, act=nn.ReLU(), embed_degree=True, bn=False, device=torch.device("cpu")):
+    def __init__(self, num_features=1, num_classes=2, num_hidden=64, num_heads=4, max_dist=20, max_degree=20, num_layers=5, act=nn.ReLU(), embed_degree=True, bn=False, device=torch.cuda):
         super(Graphormer, self).__init__()
 
         self.dim = num_hidden
@@ -611,7 +611,7 @@ class FusedDistEncoder(nn.Module):
 
 
 class GraphormerGD(torch.nn.Module):
-    def __init__(self, num_features=1, num_classes=2, num_hidden=64, num_heads=4, max_dist=20, max_degree=20, num_layers=5, act=nn.ReLU(), embed_degree=False, bn=False, device=torch.device("cpu")):
+    def __init__(self, num_features=1, num_classes=2, num_hidden=64, num_heads=4, max_dist=20, max_degree=20, num_layers=5, act=nn.ReLU(), embed_degree=False, bn=False, device=torch.cuda):
         super().__init__()
 
         self.dim = num_hidden
@@ -699,6 +699,7 @@ class GraphormerGD(torch.nn.Module):
         rd_dist_list = torch.stack(rd_dist_list, dim=0).to(self.device)
         mask_list = torch.stack(mask_list, dim=0)
         mul_mask_list = torch.stack(mul_mask_list, dim=0)
+        torch.cuda.empty_cache()
         # print(x.shape)
         x = self.input_embedding(x)
         if self.embed_degree:
@@ -719,6 +720,7 @@ class GraphormerGD(torch.nn.Module):
             x = self.convs[i](x, attn_bias=attn_bias, attn_mul=attn_mul)
             if self.use_bn:
                 x = self.bns[i](x.transpose(1, 2)).transpose(1, 2)
+            torch.cuda.empty_cache()
 
         readout_x = []
         for i in range(node_num.shape[0]):

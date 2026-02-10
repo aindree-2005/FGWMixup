@@ -5,23 +5,9 @@ from ot.optim import cg
 from ot.lp import emd_1d, emd
 from ot.utils import check_random_state, unif
 from ot.backend import get_backend
-import importlib
-from ot.gromov import *
-from ot.gromov import update_barycenter_feature, update_barycenter_structure
-import time
-import ot.gromov as gromov
 
-def _resolve_gromov_helper(names):
-    module_names = ("ot.gromov", "ot.gromov._bregman", "ot.gromov._utils")
-    for module_name in module_names:
-        try:
-            module = importlib.import_module(module_name)
-        except ImportError:
-            continue
-        for name in names:
-            if hasattr(module, name):
-                return getattr(module, name)
-    return None
+from ot.gromov import *
+import time
 
 def fused_ACC_numpy(M, A, B, a=None, b=None, X=None, alpha=0, epoch=2000, eps=1e-5, rho=1e-1):
     if a is None:
@@ -178,14 +164,14 @@ def my_fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fix
 
         if not fixed_features:
             Ys_temp = [y.T for y in Ys]
-            X = update_barycenter_feature(lambdas, Ys_temp, T, p).T
+            X = update_feature_matrix(lambdas, Ys_temp, T, p).T
 
         Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
 
         if not fixed_structure and cpt > 0:
             if loss_fun == 'square_loss':
                 T_temp = [t.T for t in T]
-                C = update_barycenter_structure(p, lambdas, T_temp, Cs)
+                C = update_structure_matrix(p, lambdas, T_temp, Cs)
                 # print('C:', C)
 
         # if rank is not None:
@@ -220,10 +206,8 @@ def my_fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fix
         # print(f'Solve FGW time @ iter {cpt}: {time.time() - time_start}')
 
         # T is N,ns
-        prev_feature_norm = nx.norm(nx.reshape(Xprev, (N, d)))
-        prev_structure_norm = nx.norm(Cprev)
-        err_feature = nx.norm(X - nx.reshape(Xprev, (N, d))) / (prev_feature_norm + 1e-12)
-        err_structure = nx.norm(C - Cprev) / (prev_structure_norm + 1e-12)
+        err_feature = nx.norm(X - nx.reshape(Xprev, (N, d))) / nx.norm(nx.reshape(Xprev, (N, d)))
+        err_structure = nx.norm(C - Cprev) / nx.norm(Cprev)
         # print(err_feature, err_structure)
         if log:
             log_['err_feature'].append(err_feature)
