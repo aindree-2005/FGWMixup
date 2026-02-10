@@ -432,14 +432,14 @@ class GraphormerLayer(nn.Module):
 
 
 class Graphormer(torch.nn.Module):
-    def __init__(self, num_features=1, num_classes=2, num_hidden=64, num_heads=4, max_dist=20, max_degree=20, num_layers=5, act=nn.ReLU(), embed_degree=True, bn=False, device=torch.cuda):
+    def __init__(self, num_features=1, num_classes=2, num_hidden=64, num_heads=4, max_dist=20, max_degree=20, num_layers=5, act=nn.ReLU(), embed_degree=True, bn=False, device=None):
         super(Graphormer, self).__init__()
 
         self.dim = num_hidden
         self.num_features = num_features
         self.num_heads = num_heads
         self.num_layers = num_layers
-        self.device = device
+        self.device = device if device is not None else torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.embed_degree = embed_degree
         self.max_degree = max_degree
         self.max_dist = max_dist
@@ -567,7 +567,7 @@ class FusedDistEncoder(nn.Module):
         super().__init__()
         self.max_dist = max_dist
         self.num_heads = num_heads
-        self.device = device
+        self.device = device if device is not None else torch.device("cuda" if torch.cuda.is_available() else "cpu")
         # deactivate node pair between which the distance is -1, VNODE is -2
         self.embedding_table = nn.Embedding(
             max_dist + 2, num_hid // 2, 
@@ -611,14 +611,14 @@ class FusedDistEncoder(nn.Module):
 
 
 class GraphormerGD(torch.nn.Module):
-    def __init__(self, num_features=1, num_classes=2, num_hidden=64, num_heads=4, max_dist=20, max_degree=20, num_layers=5, act=nn.ReLU(), embed_degree=False, bn=False, device=torch.cuda):
+    def __init__(self, num_features=1, num_classes=2, num_hidden=64, num_heads=4, max_dist=20, max_degree=20, num_layers=5, act=nn.ReLU(), embed_degree=False, bn=False, device=None):
         super().__init__()
 
         self.dim = num_hidden
         self.num_features = num_features
         self.num_heads = num_heads
         self.num_layers = num_layers
-        self.device = device
+        self.device = device if device is not None else torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.embed_degree = embed_degree
         self.max_degree = max_degree
         self.max_dist = max_dist
@@ -699,7 +699,8 @@ class GraphormerGD(torch.nn.Module):
         rd_dist_list = torch.stack(rd_dist_list, dim=0).to(self.device)
         mask_list = torch.stack(mask_list, dim=0)
         mul_mask_list = torch.stack(mul_mask_list, dim=0)
-        torch.cuda.empty_cache()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
         # print(x.shape)
         x = self.input_embedding(x)
         if self.embed_degree:
@@ -720,7 +721,8 @@ class GraphormerGD(torch.nn.Module):
             x = self.convs[i](x, attn_bias=attn_bias, attn_mul=attn_mul)
             if self.use_bn:
                 x = self.bns[i](x.transpose(1, 2)).transpose(1, 2)
-            torch.cuda.empty_cache()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
         readout_x = []
         for i in range(node_num.shape[0]):

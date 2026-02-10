@@ -284,8 +284,9 @@ if __name__ == '__main__':
     np.random.seed(seed) #numpy
     random.seed(seed)
     torch.manual_seed(seed) # cpu
-    torch.cuda.manual_seed(seed) #gpu
-    torch.backends.cudnn.deterministic=True # cudnn
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed) #gpu
+        torch.backends.cudnn.deterministic=True # cudnn
 
     if args.gpu:
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
