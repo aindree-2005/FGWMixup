@@ -1,12 +1,12 @@
 import numpy as np
-from ot.bregman import sinkhorn
 from ot.utils import dist, UndefinedParameter, list_to_array
-from ot.optim import cg
-from ot.lp import emd_1d, emd
-from ot.utils import check_random_state, unif
+from ot.utils import check_random_state
 from ot.backend import get_backend
-
-from ot.gromov import *
+from ot.gromov import (
+    fused_gromov_wasserstein,
+    update_barycenter_feature,
+    update_barycenter_structure,
+)
 import time
 
 def fused_ACC_numpy(M, A, B, a=None, b=None, X=None, alpha=0, epoch=2000, eps=1e-5, rho=1e-1):
@@ -108,7 +108,8 @@ def my_fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fix
     Cs = list_to_array(*Cs)
     ps = list_to_array(*ps)
     Ys = list_to_array(*Ys)
-    p = list_to_array(p)
+    if p is not None:
+        p = list_to_array(p)
     nx = get_backend(*Cs, *Ys, *ps)
 
     S = len(Cs)
@@ -163,15 +164,29 @@ def my_fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fix
         Xprev = X
 
         if not fixed_features:
-            Ys_temp = [y.T for y in Ys]
-            X = update_feature_matrix(lambdas, Ys_temp, T, p).T
+            X = update_barycenter_feature(
+                Ts=T,
+                Ys=Ys,
+                lambdas=lambdas,
+                p=p,
+                loss_fun=loss_fun,
+                target=False,
+                nx=nx,
+            )
 
         Ms = [dist(X, Ys[s]) for s in range(len(Ys))]
 
         if not fixed_structure and cpt > 0:
             if loss_fun == 'square_loss':
-                T_temp = [t.T for t in T]
-                C = update_structure_matrix(p, lambdas, T_temp, Cs)
+                C = update_barycenter_structure(
+                    Ts=T,
+                    Cs=Cs,
+                    lambdas=lambdas,
+                    p=p,
+                    loss_fun=loss_fun,
+                    target=False,
+                    nx=nx,
+                )
                 # print('C:', C)
 
         # if rank is not None:
@@ -197,8 +212,20 @@ def my_fgw_barycenters(N, Ys, Cs, ps, lambdas, alpha, fixed_structure=False, fix
             T = []
             dists = []
             for s in range(S):
-                cur_T, cur_log = fused_gromov_wasserstein(Ms[s], C, Cs[s], p, ps[s], loss_fun, alpha,
-                                        numItermax=300, stopThr=1e-5, verbose=False, log=True)
+                cur_T, cur_log = fused_gromov_wasserstein(
+                    M=Ms[s],
+                    C1=C,
+                    C2=Cs[s],
+                    p=p,
+                    q=ps[s],
+                    loss_fun=loss_fun,
+                    alpha=alpha,
+                    max_iter=300,
+                    tol_rel=1e-5,
+                    tol_abs=0.0,
+                    verbose=False,
+                    log=True,
+                )
                 T.append(cur_T)
                 dists.append(cur_log['fgw_dist'])
             # dists = [fused_gromov_wasserstein2(Ms[s], C, Cs[s], p, ps[s], loss_fun, alpha,
